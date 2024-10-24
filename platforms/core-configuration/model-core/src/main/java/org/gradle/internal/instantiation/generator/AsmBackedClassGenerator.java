@@ -984,6 +984,14 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
                 return;
             }
 
+            // TODO: fix/remove in 9.0
+            if (
+                property
+                    .getOverridableSetters().stream()
+                    .anyMatch(setter -> setter.getParameterCount() == 1 && setter.getParameterTypes()[0].equals(Object.class) && setter.getReturnType().equals(Void.TYPE))
+            ) {
+                return;
+            }
             // GENERATE public void set<Name>(Object p) {
             //    ((LazyGroovySupport)<getter>()).setFromAnyValue(p);
             // }
