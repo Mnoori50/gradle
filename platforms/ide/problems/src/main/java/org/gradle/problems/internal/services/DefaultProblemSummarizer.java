@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -48,7 +47,7 @@ public class DefaultProblemSummarizer implements ProblemSummarizer {
     private final Integer threshold;
     private final ProblemReportCreator problemReportCreator;
 
-    private final Map<ProblemId, AtomicInteger> seenProblemsWithCounts = new HashMap<ProblemId, AtomicInteger>();
+    private final Map<ProblemId, Integer> seenProblemsWithCounts = new HashMap<>();
 
     public static final InternalOption<Integer> THRESHOLD_OPTION = new IntegerInternalOption("org.gradle.internal.problem.summary.threshold", 15);
     public static final int THRESHOLD_DEFAULT_VALUE = THRESHOLD_OPTION.getDefaultValue();
@@ -98,9 +97,12 @@ public class DefaultProblemSummarizer implements ProblemSummarizer {
         }
     }
 
-    private boolean exceededThreshold(Problem problem) {
-        ProblemId problemId = problem.getDefinition().getId();
-        AtomicInteger count = seenProblemsWithCounts.computeIfAbsent(problemId, key -> new AtomicInteger(0));
-        return count.incrementAndGet() > threshold;
+    private synchronized boolean exceededThreshold(Problem problem) {
+        int count = seenProblemsWithCounts.merge(
+            problem.getDefinition().getId(),
+            1,
+            (oldValue, newValue) -> oldValue + 1
+        );
+        return count > threshold;
     }
 }
