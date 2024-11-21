@@ -80,8 +80,8 @@ public class DefaultProblemSummarizer implements ProblemSummarizer {
 
     private List<ProblemSummaryData> getCutOffProblems() {
         return seenProblemsWithCounts.entrySet().stream()
-            .filter(entry -> entry.getValue().get() > threshold)
-            .map(entry -> new ProblemSummaryData(entry.getKey(), entry.getValue().get() - threshold))
+            .filter(entry -> entry.getValue() > threshold)
+            .map(entry -> new ProblemSummaryData(entry.getKey(), entry.getValue() - threshold))
             .collect(toImmutableList());
     }
 
