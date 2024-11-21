@@ -36,6 +36,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -47,7 +49,7 @@ public class DefaultProblemSummarizer implements ProblemSummarizer {
     private final Integer threshold;
     private final ProblemReportCreator problemReportCreator;
 
-    private final Map<ProblemId, Integer> seenProblemsWithCounts = new HashMap<>();
+    private final ConcurrentMap<ProblemId, Integer> seenProblemsWithCounts = new ConcurrentHashMap<>();
 
     public static final InternalOption<Integer> THRESHOLD_OPTION = new IntegerInternalOption("org.gradle.internal.problem.summary.threshold", 15);
     public static final int THRESHOLD_DEFAULT_VALUE = THRESHOLD_OPTION.getDefaultValue();
@@ -97,11 +99,10 @@ public class DefaultProblemSummarizer implements ProblemSummarizer {
         }
     }
 
-    private synchronized boolean exceededThreshold(Problem problem) {
-        int count = seenProblemsWithCounts.merge(
+    private boolean exceededThreshold(Problem problem) {
+        int count = seenProblemsWithCounts.compute(
             problem.getDefinition().getId(),
-            1,
-            (oldValue, newValue) -> oldValue + 1
+            (key, value) -> value == null ? 1 : value + 1
         );
         return count > threshold;
     }
