@@ -429,7 +429,7 @@ class BuildScanPluginSmokeTest extends AbstractSmokeTest {
     }
 
     SmokeTestGradleRunner scanRunner(String... args) {
-        // Run with --build-cache to test also build-cache events
+        // Run with --build-cache to test also build cache events
         runner("build", "-Dscan.dump", "--build-cache", *args)
     }
 

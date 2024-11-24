@@ -35,6 +35,49 @@ The previous step will help you identify potential problems by issuing deprecati
 . Run `gradle wrapper --gradle-version {gradleVersion}` to update the project to {gradleVersion}.
 . Try to run the project and debug any errors using the <<troubleshooting.adoc#troubleshooting, Troubleshooting Guide>>.
 
+[[changes_8.12]]
+== Upgrading from 8.11 and earlier
+
+=== Potential breaking changes
+
+==== Upgrade to Kotlin 2.0.21
+
+The embedded Kotlin has been updated from 2.0.20 to link:https://github.com/JetBrains/kotlin/releases/tag/v2.0.21[Kotlin 2.0.21].
+
+==== Upgrade to Ant 1.10.15
+
+Ant has been updated to https://github.com/apache/ant/blob/rel/1.10.15/WHATSNEW[Ant 1.10.15].
+
+=== Deprecations
+
+[[init_must_run_alone]]
+==== `init` must run alone
+The <<build_init_plugin.adoc#sec:build_init_tasks, `init` task>> must run by itself.
+This task should not be combined with other tasks in a single Gradle invocation.
+
+Running `init` in the same invocation as other tasks will become an error in Gradle 9.0.
+
+For instance, this wil *not* be allowed:
+
+[source]
+----
+> gradlew init tasks
+----
+
+[[task_project]]
+==== Calling `Task.getProject()` from a task action
+
+Calling link:{javadocPath}/org/gradle/api/Task.html#getProject--[Task.getProject()] from a task action at execution time is now deprecated and will be made an error in Gradle 9.0.
+This method can still be used during configuration time.
+
+The deprecation is only issued if the configuration cache is **not** enabled.
+When the configuration cache is enabled, calls to link:{javadocPath}/org/gradle/api/Task.html#getProject--[Task.getProject()] are reported as configuration cache problems instead.
+
+This deprecation was originally introduced in <<upgrading_version_7.adoc#task_project, Gradle 7.4>> but was only issued when the <<configuration_cache#config_cache:stable,`STABLE_CONFIGURATION_CACHE`>> feature flag was enabled. That feature flag no longer controls this deprecation.
+This is another step towards moving users away from idioms that are incompatible with the configuration cache, which will become the only mode supported by Gradle in a future release.
+
+Please refer to the <<configuration_cache#config_cache:requirements:use_project_during_execution, configuration cache documentation>> for alternatives to invoking `Task.getProject()` at execution time that are compatible with the configuration cache.
+
 [[changes_8.11]]
 == Upgrading from 8.10 and earlier
 
@@ -311,7 +354,7 @@ These methods on link:{javadocPath}/org/gradle/api/tasks/javadoc/Javadoc.html[Ja
 
 - link:{javadocPath}/org/gradle/api/tasks/javadoc/Javadoc.html#isVerbose()[isVerbose()] is replaced by link:{javadocPath}/org/gradle/external/javadoc/MinimalJavadocOptions.html#isVerbose()[getOptions().isVerbose()]
 - Calling link:{javadocPath}/org/gradle/api/tasks/javadoc/Javadoc.html#setVerbose(boolean)[setVerbose(boolean)] with `true` is replaced by link:{javadocPath}/org/gradle/external/javadoc/MinimalJavadocOptions.html#verbose()[getOptions().verbose()]
-    - Calling `setVerbose(false)` did nothing.
+- Calling `setVerbose(false)` did nothing.
 
 [[changes_8.10]]
 == Upgrading from 8.9 and earlier
@@ -665,7 +708,7 @@ In Gradle 8.8, this mechanism was extended to permit the retention configuration
 - Specifying `Cleanup.DISABLED` or `Cleanup.ALWAYS` will now prevent or force the cleanup of the local build cache
 - Build cache entry retention is now configured via an `init-script`, link:directory_layout.html#dir:gradle_user_home:configure_cache_cleanup[in the same manner as other caches].
 
-If you want build-cache entries to be retained for 30 days, **remove** any calls to the deprecated method:
+If you want build cache entries to be retained for 30 days, **remove** any calls to the deprecated method:
 
 ```kotlin
 buildCache {
@@ -1274,6 +1317,9 @@ Gradle 8.4 now configures XML parsers with security features enabled.
 If your build logic depends on old XML parsers that don't support secure parsing, your build may fail.
 If you encounter a failure, check and update or remove any dependency on legacy XML parsers.
 
+If you are an Android user, please upgrade your AGP version to 8.3.0 or higher to fix the issue caused by AGP itself.
+See the link:https://issuetracker.google.com/u/0/issues/306301014[Update XML parser used in AGP for Gradle 8.4 compatibility] for more details.
+
 If you are unable to upgrade XML parsers coming from your build logic dependencies, you can force the use of the XML parsers built into the JVM.
 In OpenJDK, for example, this can be done by adding the following to `gradle.properties`:
 ```
@@ -1867,7 +1913,7 @@ Current usages of these methods should migrate to `link:{javadocPath}/org/gradle
 [[deprecated_configuration_usage]]
 ==== Using configurations incorrectly
 
-Gradle will now warn at runtime when methods of link:{javadocPath}/org/gradle/api/artifacts/Configuration.html--[Configuration] are called inconsistently with the configuration's intended usage.
+Gradle will now warn at runtime when methods of link:{javadocPath}/org/gradle/api/artifacts/Configuration.html[Configuration] are called inconsistently with the configuration's intended usage.
 
 This change is part of a larger ongoing effort to make the intended behavior of configurations more consistent and predictable and to unlock further speed and memory improvements.
 
